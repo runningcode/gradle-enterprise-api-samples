@@ -3,7 +3,7 @@ description = "Gradle Enterprise API sample"
 
 plugins {
     id("org.openapi.generator") version "6.0.0"
-    kotlin("jvm") version embeddedKotlinVersion apply false
+    kotlin("jvm") version "1.7.0"
     `java-library`
     application
 }
@@ -12,70 +12,57 @@ repositories {
     mavenCentral()
 }
 
+val apiSpecificationFile = resources.text.fromUri("https://docs.gradle.com/enterprise/api-manual/ref/gradle-enterprise-2022.2.4-api.yaml").asFile()
+
 application {
-    mainClass.set("com.gradle.enterprise.api.SampleMain")
+    mainClass.set("com.gradle.enterprise.api.KotlinMainKt")
 }
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
+        languageVersion.set(JavaLanguageVersion.of(11))
     }
 }
 
 dependencies {
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("info.picocli:picocli:4.6.3")
-
-    // Required for OpenAPI Generator
-    implementation("io.swagger:swagger-annotations:1.6.6")
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3")
-    implementation("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.13.3")
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
-    implementation("org.apache.httpcomponents:httpclient:4.5.13")
-    implementation("org.apache.httpcomponents:httpcore:4.4.15")
-    implementation("org.apache.httpcomponents:httpmime:4.5.13")
+    implementation("com.squareup.moshi:moshi:1.13.0")
+    implementation("com.squareup.moshi:moshi-adapters:1.13.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 }
 
-val gradleEnterpriseVersion = "2022.2.4" // Must be later than 2022.1
-val baseApiUrl = providers.gradleProperty("apiManualUrl").orElse("https://docs.gradle.com/enterprise/api-manual/ref/")
-
-val apiSpecificationFileGradleProperty = providers.gradleProperty("apiSpecificationFile")
-val apiSpecificationFile = apiSpecificationFileGradleProperty
-    .map { s -> file(s) }
-    .orElse(objects.property(File::class)
-        .convention(provider {
-            resources.text.fromUri("${baseApiUrl.get()}gradle-enterprise-${gradleEnterpriseVersion}-api.yaml").asFile()
-        })
-    ).map { file -> file.absolutePath }
 
 val basePackageName = "com.gradle.enterprise.api"
 val modelPackageName = "$basePackageName.model"
 val invokerPackageName = "$basePackageName.client"
 openApiGenerate {
-    generatorName.set("java")
-    inputSpec.set(apiSpecificationFile)
+    generatorName.set("kotlin")
+    inputSpec.set(apiSpecificationFile.absolutePath)
     outputDir.set(project.layout.buildDirectory.file("generated/$name").map { it.asFile.absolutePath })
     ignoreFileOverride.set(project.layout.projectDirectory.file(".openapi-generator-ignore").asFile.absolutePath)
     modelPackage.set(modelPackageName)
     apiPackage.set(basePackageName)
     invokerPackage.set(invokerPackageName)
-    // see https://github.com/OpenAPITools/openapi-generator/blob/master/docs/generators/java.md for a description of each configuration option
     configOptions.set(mapOf(
-        "library" to "apache-httpclient",
+        "library" to "jvm-retrofit2",
+        "useCoroutines" to "true",
+        "serializableModel" to "true",
         "dateLibrary" to "java8",
         "hideGenerationTimestamp" to "true",
         "openApiNullable" to "false",
         "useBeanValidation" to "false",
         "disallowAdditionalPropertiesIfNotPresent" to "false",
-        "additionalModelTypeAnnotations" to  "@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)",
         "sourceFolder" to ""  // makes IDEs like IntelliJ more reliably interpret the class packages.
     ))
 }
 
-sourceSets {
-    main {
-        java {
-            srcDir(tasks.openApiGenerate)
-        }
-    }
+sourceSets.main {
+    java { srcDir(tasks.openApiGenerate) }
 }
