@@ -1,5 +1,6 @@
 package com.gradle.enterprise.api
 
+import com.gradle.enterprise.api.model.Build
 import com.gradle.enterprise.api.model.BuildsQuery
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -8,9 +9,10 @@ import java.util.concurrent.TimeUnit
 
 class BuildProcessor(private val url: String, private val authToken: String) {
 
-    fun process(hours: Int) = runBlocking {
-        val timeAgo = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(hours.toLong())
-        println(timeAgo)
+    fun process(minutes: Long) = runBlocking {
+        val timeStart = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(minutes)
+        println("Starting to fetch builds from $minutes minutes ago, which is $timeStart")
+        println("Fetching builds...")
 
         val apiClient = ApiClient(baseUrl = url,
             okHttpClientBuilder = OkHttpClient.Builder()
@@ -21,10 +23,9 @@ class BuildProcessor(private val url: String, private val authToken: String) {
             bearerToken = authToken)
         val buildApi = apiClient.createService(ModifiedBuildsApi::class.java)
 
-        var query = BuildsQuery(since = timeAgo, maxBuilds = 200)
+        var query = BuildsQuery(since = timeStart, maxBuilds = 200)
 
-        val buildAnswer = buildApi.getBuilds(query.since!!)
-        val builds = buildAnswer.body()!!.toMutableList()
+        val builds = mutableListOf<Build>()
 
         // Keep querying while there are still builds to fetch
         while (true) {
@@ -36,7 +37,7 @@ class BuildProcessor(private val url: String, private val authToken: String) {
             builds.addAll(result.body()!!)
         }
 
-        println("Processing number of builds ${builds.size}")
+        println("Processing ${builds.size} builds...")
 
         // Find projects with longest average build time
         builds.filter {
@@ -47,12 +48,12 @@ class BuildProcessor(private val url: String, private val authToken: String) {
             .map { (projectName, projectBuilds) ->
                 projectName to projectBuilds.map { it.buildDuration }.average() }
             .sortedByDescending { pair -> pair.second }
-            .forEach { (username, millis) ->
+            .forEach { (projectName, millis) ->
                 val seconds = TimeUnit.MILLISECONDS.toSeconds(millis.toLong())
-                println("Project ${username} has average build time of ${seconds}s")
+                println("Project ${projectName} has average build time of ${seconds}s")
             }
 
-        // Find user with longest average build time
+        // Find usernames with longest average build time
         builds.filter { it.buildToolType == "gradle" }.map { build ->
             buildApi.getGradleAttributes(build.id, null).body()!!
         }

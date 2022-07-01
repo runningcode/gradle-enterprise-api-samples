@@ -27,16 +27,16 @@ class CommandLineArgumentProcessor : Callable<Int> {
     lateinit var accessKey: String
 
     @Option(
-        names = ["--hours"],
-        description = ["The number of hours of build history to fetch."],
+        names = ["--minutes"],
+        description = ["The number of minutes of build history to fetch."],
         required = false,
-        defaultValue = "1",
+        defaultValue = "15",
         order = 2
     )
-    var hours: Int = 1
+    var minutes: Long = 1
 
     override fun call(): Int {
-        BuildProcessor(serverUrl, accessKey).process(hours)
+        BuildProcessor(serverUrl, accessKey).process(minutes)
         return 0
     }
 }
