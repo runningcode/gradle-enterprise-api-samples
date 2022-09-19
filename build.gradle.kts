@@ -2,8 +2,8 @@ group = "com.gradle.enterprise.api"
 description = "Gradle Enterprise API sample"
 
 plugins {
-    id("org.openapi.generator") version "6.0.0"
-    kotlin("jvm") version "1.7.0"
+    id("org.openapi.generator") version "6.1.0"
+    kotlin("jvm") version "1.7.10"
     `java-library`
     application
 }
@@ -12,7 +12,7 @@ repositories {
     mavenCentral()
 }
 
-val apiSpecificationFile = resources.text.fromUri("https://docs.gradle.com/enterprise/api-manual/ref/gradle-enterprise-2022.2.4-api.yaml").asFile()
+val apiSpecificationFile = resources.text.fromUri("https://docs.gradle.com/enterprise/api-manual/ref/gradle-enterprise-2022.3-api.yaml").asFile()
 
 application {
     mainClass.set("com.gradle.enterprise.api.KotlinMainKt")
@@ -28,12 +28,12 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     implementation("info.picocli:picocli:4.6.3")
-    implementation("com.squareup.moshi:moshi:1.13.0")
-    implementation("com.squareup.moshi:moshi-adapters:1.13.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
+    implementation("com.squareup.moshi:moshi:1.14.0")
+    implementation("com.squareup.moshi:moshi-adapters:1.14.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.7.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 }
